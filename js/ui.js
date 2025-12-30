@@ -21,10 +21,11 @@ export function renderWeather(data, title) {
     <h3>${title}</h3>
     <div class="forecast">
       ${data.forecast.forecastday.map(day => `
-        <div>
+        <div class="forecast-day">
           <p>${day.date}</p>
-          <img src="${day.day.condition.icon}" />
-          <p>${day.day.avgtemp_c}°C</p>
+          <img src="${day.day.condition.icon}" alt="">
+          <p><strong>${day.day.avgtemp_c}°C</strong></p>
+          <p>${day.day.condition.text}</p>
         </div>
       `).join('')}
     </div>
@@ -35,4 +36,5 @@ export function renderWeather(data, title) {
 
 export function clearWeather() {
   weatherList.innerHTML = '';
+
 }
