@@ -1,4 +1,4 @@
-const API_KEY = 'bcf87d2388fc4d21b2e201346241812'; // Замените на свой ключ от WeatherAPI
+const API_KEY = '5293cce3bfb248a7bc514025253012'; // Замените на свой ключ от WeatherAPI
 const BASE_URL = 'https://api.weatherapi.com/v1';
 
 // Состояние приложения
@@ -585,4 +585,5 @@ function showNotification(message) {
 }
 
 // Запуск приложения при загрузке страницы
+
 document.addEventListener('DOMContentLoaded', init);
