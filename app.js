@@ -1,95 +1,153 @@
-const API_KEY = '5293cce3bfb248a7bc514025253012';
 
+const API_KEY = '5293cce3bfb248a7bc514025253012'; // Замени на свой ключ с weatherapi.com
+const BASE_URL = 'https://api.weatherapi.com/v1';
 
-function fetchWeatherByCity(city, container) {
-container.innerHTML = 'Загрузка...';
+let state = {
+    mainLocation: localStorage.getItem('mainLocation') || null, // Координаты или имя
+    extraCities: JSON.parse(localStorage.getItem('extraCities')) || [],
+    isGeo: !localStorage.getItem('mainLocation') // Флаг, была ли получена геопозиция
+};
 
+// Элементы DOM
+const mainContainer = document.getElementById('main-weather');
+const extraContainer = document.getElementById('extra-weather');
+const cityInput = document.getElementById('city-input');
+const dropdown = document.getElementById('autocomplete-list');
+const errorMsg = document.getElementById('error-msg');
+const refreshBtn = document.getElementById('refresh-btn');
 
-fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&lang=ru&appid=${API_KEY}`)
-.then(res => res.json())
-.then(data => renderForecast(data, city, container))
-.catch(() => container.innerHTML = 'Ошибка загрузки');
-}
-
-
-function fetchWeatherByCoords(lat, lon) {
-weatherContainer.innerHTML = 'Загрузка...';
-
-
-fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=ru&appid=${API_KEY}`)
-.then(res => res.json())
-.then(data => renderForecast(data, 'Текущее местоположение', weatherContainer))
-.catch(() => weatherContainer.innerHTML = 'Ошибка');
-}
-
-
-function renderForecast(data, title, container) {
-const days = {};
-
-
-data.list.forEach(item => {
-const date = item.dt_txt.split(' ')[0];
-if (!days[date]) days[date] = [];
-days[date].push(item);
+// Инициализация
+window.addEventListener('DOMContentLoaded', () => {
+    if (!state.mainLocation) {
+        getUserLocation();
+    } else {
+        renderAllWeather();
+    }
 });
 
-
-const dates = Object.keys(days).slice(0, 3);
-
-
-container.innerHTML = `<h3>${title}</h3>` + dates.map(date => {
-const temps = days[date].map(i => i.main.temp);
-const avg = (temps.reduce((a, b) => a + b) / temps.length).toFixed(1);
-return `<div class="card"><strong>${date}</strong><p>${avg} °C</p></div>`;
-}).join('');
+// 1. Геолокация
+function getUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                state.mainLocation = `${pos.coords.latitude},${pos.coords.longitude}`;
+                state.isGeo = true;
+                saveState();
+                renderAllWeather();
+            },
+            () => {
+                showError("Доступ к геопозиции отклонен. Введите город вручную.");
+                state.isGeo = false;
+            }
+        );
+    }
 }
 
-
-function initGeo() {
-navigator.geolocation.getCurrentPosition(
-pos => {
-state.main = { type: 'geo', value: pos.coords };
-saveState();
-fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
-},
-() => cityError.textContent = 'Разрешение отклонено. Введите город.'
-);
+// 2. Получение данных с API
+async function fetchWeatherData(query) {
+    try {
+        const res = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${query}&days=3&lang=ru`);
+        if (!res.ok) throw new Error('Город не найден');
+        return await res.json();
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
 }
 
+// 3. Отрисовка
+async function renderAllWeather() {
+    mainContainer.innerHTML = '<div class="loading-spinner">Загрузка...</div>';
+    extraContainer.innerHTML = '';
 
-refreshBtn.onclick = () => location.reload(false);
+    // Основной город
+    if (state.mainLocation) {
+        const data = await fetchWeatherData(state.mainLocation);
+        if (data) {
+            const label = state.isGeo ? "Текущее местоположение" : data.location.name;
+            mainContainer.innerHTML = createWeatherHTML(data, label);
+        }
+    }
 
+    // Дополнительные города
+    for (const city of state.extraCities) {
+        const data = await fetchWeatherData(city);
+        if (data) {
+            const card = document.createElement('div');
+            card.innerHTML = createWeatherHTML(data, data.location.name, true);
+            extraContainer.appendChild(card);
+        }
+    }
+}
 
-cityInput.oninput = () => {
-suggestions.innerHTML = '';
-const value = cityInput.value.toLowerCase();
-citiesList.filter(c => c.toLowerCase().includes(value)).forEach(city => {
-const li = document.createElement('li');
-li.textContent = city;
-li.onclick = () => {
-cityInput.value = city;
-suggestions.innerHTML = '';
-};
-suggestions.appendChild(li);
+function createWeatherHTML(data, label, canDelete = false) {
+    const forecastHTML = data.forecast.forecastday.map(day => `
+        <div class="day-item">
+            <p><strong>${new Date(day.date).toLocaleDateString('ru-RU', {weekday: 'short'})}</strong></p>
+            <img src="${day.day.condition.icon}" width="40">
+            <p>${Math.round(day.day.avgtemp_c)}°C</p>
+        </div>
+    `).join('');
+
+    return `
+        <div class="weather-card">
+            <div class="weather-header">
+                <h2>${label}</h2>
+                <p>${data.current.condition.text} | Текущая: ${data.current.temp_c}°C</p>
+            </div>
+            <div class="forecast-row">${forecastHTML}</div>
+        </div>
+    `;
+}
+
+// 4. Поиск и Автодополнение
+cityInput.addEventListener('input', async (e) => {
+    const val = e.target.value;
+    errorMsg.style.display = 'none';
+    if (val.length < 3) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    const res = await fetch(`${BASE_URL}/search.json?key=${API_KEY}&q=${val}`);
+    const cities = await res.json();
+    
+    if (cities.length > 0) {
+        dropdown.innerHTML = cities.map(c => `<li onclick="addCity('${c.name}')">${c.name}, ${c.country}</li>`).join('');
+        dropdown.style.display = 'block';
+    }
 });
-};
 
-
-addCityBtn.onclick = () => {
-const city = cityInput.value;
-if (!citiesList.includes(city)) {
-cityError.textContent = 'Город не найден';
-return;
+function addCity(cityName) {
+    if (!state.mainLocation) {
+        state.mainLocation = cityName;
+        state.isGeo = false;
+    } else if (!state.extraCities.includes(cityName)) {
+        if (state.extraCities.length >= 2 || state.extraCities.length < 2) {
+             state.extraCities.push(cityName);
+        }
+    }
+    
+    dropdown.style.display = 'none';
+    cityInput.value = '';
+    saveState();
+    renderAllWeather();
 }
-state.cities.push(city);
-saveState();
-fetchWeatherByCity(city, citiesContainer);
-};
 
+// 5. Вспомогательные функции
+function saveState() {
+    localStorage.setItem('mainLocation', state.mainLocation);
+    localStorage.setItem('extraCities', JSON.stringify(state.extraCities));
+}
 
-if (!state.main) initGeo();
-else if (state.main.type === 'geo') fetchWeatherByCoords(state.main.value.latitude, state.main.value.longitude);
-else fetchWeatherByCity(state.main.value, weatherContainer);
+function showError(text) {
+    errorMsg.textContent = text;
+    errorMsg.style.display = 'block';
+}
 
+refreshBtn.addEventListener('click', renderAllWeather);
 
-state.cities.forEach(city => fetchWeatherByCity(city, citiesContainer));
+// Закрытие выпадающего списка при клике мимо
+document.addEventListener('click', (e) => {
+    if (e.target !== cityInput) dropdown.style.display = 'none';
+});
