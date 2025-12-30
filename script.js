@@ -1,4 +1,4 @@
-const API_KEY = '5293cce3bfb248a7bc514025253012'; // Замените на свой ключ от WeatherAPI
+const API_KEY = '5293cce3bfb248a7bc514025253012';
 const BASE_URL = 'https://api.weatherapi.com/v1';
 
 // Состояние приложения
@@ -6,7 +6,8 @@ let state = {
     cities: [],
     useGeolocation: true,
     currentLocation: null,
-    isLoading: false
+    isLoading: false,
+    isFirstLoad: true
 };
 
 // DOM элементы
@@ -36,14 +37,31 @@ async function init() {
     loadState();
     setupEventListeners();
     
+    // Если это первая загрузка, показываем загрузку
+    if (state.isFirstLoad) {
+        elements.loadingOverlay.classList.remove('hidden');
+    }
+    
     if (state.useGeolocation) {
         await getLocation();
     } else if (state.cities.length > 0) {
         await loadWeatherForAllCities();
     } else {
-        // Показать модальное окно для добавления первого города
-        setTimeout(() => showCityModal(), 500);
+        // Показываем модальное окно для добавления первого города
+        // Но только если это первая загрузка
+        if (state.isFirstLoad) {
+            setTimeout(() => {
+                elements.loadingOverlay.classList.add('hidden');
+                showCityModal();
+            }, 500);
+        } else {
+            elements.loadingOverlay.classList.add('hidden');
+            showWelcomeMessage();
+        }
     }
+    
+    state.isFirstLoad = false;
+    saveState();
 }
 
 // Загрузка состояния из localStorage
@@ -101,8 +119,6 @@ async function getLocation() {
         return;
     }
     
-    elements.loadingOverlay.classList.remove('hidden');
-    
     try {
         const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -122,20 +138,28 @@ async function getLocation() {
         console.warn('Геолокация отклонена или произошла ошибка:', error);
         state.useGeolocation = false;
         saveState();
-        showCityModal();
-    } finally {
+        
+        // Скрываем индикатор загрузки и показываем модальное окно
         elements.loadingOverlay.classList.add('hidden');
+        
+        // Показываем модальное окно только при первом отказе
+        if (state.isFirstLoad || state.cities.length === 0) {
+            showCityModal();
+        } else {
+            await loadWeatherForAllCities();
+        }
     }
 }
 
 // Загрузка погоды для всех городов
 async function loadWeatherForAllCities() {
+    // Если нет геолокации и нет городов, не загружаем ничего
     if (!state.useGeolocation && state.cities.length === 0) {
         elements.loadingOverlay.classList.add('hidden');
         showWelcomeMessage();
         return;
     }
-
+    
     elements.loadingOverlay.classList.remove('hidden');
     elements.errorOverlay.classList.add('hidden');
     
@@ -307,6 +331,12 @@ async function handleCityInput() {
 function displayWeather(weatherData) {
     elements.weatherCards.innerHTML = '';
     
+    // Если нет данных о погоде, показываем приветственное сообщение
+    if (!weatherData || weatherData.length === 0) {
+        showWelcomeMessage();
+        return;
+    }
+    
     weatherData.forEach((data, index) => {
         if (!data || !data.location) return;
         
@@ -390,6 +420,26 @@ function displayWeather(weatherData) {
             removeCity(city);
         });
     });
+}
+
+// Показать приветственное сообщение
+function showWelcomeMessage() {
+    elements.weatherCards.innerHTML = `
+        <div class="welcome-message">
+            <div class="welcome-icon">
+                <i class="fas fa-cloud-sun"></i>
+            </div>
+            <h2>Добро пожаловать в Weather Forecast!</h2>
+            <p>Начните отслеживать погоду, добавив свой первый город.</p>
+            <button id="addFirstCityBtn" class="btn add-city-btn">
+                <i class="fas fa-plus"></i> Добавить первый город
+            </button>
+            <p class="welcome-hint">Или используйте кнопку "Добавить город" вверху</p>
+        </div>
+    `;
+    
+    // Добавляем обработчик для кнопки добавления первого города
+    document.getElementById('addFirstCityBtn').addEventListener('click', showCityModal);
 }
 
 // Получение иконки погоды
@@ -511,13 +561,7 @@ async function addCityFromInput() {
         
         const fullCityName = weatherData.location.name;
         
-        // Если это первый город и геолокация отключена, устанавливаем его как основной
-        if (state.cities.length === 0 && !state.useGeolocation) {
-            state.cities.unshift(fullCityName);
-        } else {
-            state.cities.push(fullCityName);
-        }
-        
+        state.cities.push(fullCityName);
         saveState();
         await loadWeatherForAllCities();
         hideCityModal();
@@ -543,7 +587,13 @@ async function removeCity(cityName) {
     if (confirm(`Вы действительно хотите удалить город "${cityName}"?`)) {
         state.cities = state.cities.filter(city => city !== cityName);
         saveState();
-        await loadWeatherForAllCities();
+        
+        // Если удалили все города и нет геолокации, показываем приветственное сообщение
+        if (state.cities.length === 0 && !state.useGeolocation) {
+            showWelcomeMessage();
+        } else {
+            await loadWeatherForAllCities();
+        }
         
         // Показываем уведомление об удалении
         showNotification(`Город "${cityName}" удален`);
@@ -552,6 +602,12 @@ async function removeCity(cityName) {
 
 // Обновление погоды
 function refreshWeather() {
+    // Если нет геолокации и нет городов, показываем приветственное сообщение
+    if (!state.useGeolocation && state.cities.length === 0) {
+        showWelcomeMessage();
+        return;
+    }
+    
     elements.loadingOverlay.classList.remove('hidden');
     elements.errorOverlay.classList.add('hidden');
     
@@ -568,6 +624,7 @@ function refreshWeather() {
 function showError(message) {
     elements.errorMessage.textContent = message;
     elements.errorOverlay.classList.remove('hidden');
+    elements.loadingOverlay.classList.add('hidden');
 }
 
 // Показ уведомления
@@ -591,6 +648,4 @@ function showNotification(message) {
 }
 
 // Запуск приложения при загрузке страницы
-
 document.addEventListener('DOMContentLoaded', init);
-
