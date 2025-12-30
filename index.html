@@ -1,37 +1,33 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Weather App</title>
-<link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App - Gemini Edition</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-<h1>Прогноз погоды</h1>
-<button id="refreshBtn">Обновить</button>
-</header>
+    <div class="container">
+        <header>
+            <h1>Прогноз погоды</h1>
+            <button id="refresh-btn" class="btn-refresh">Обновить данные</button>
+        </header>
 
+        <main id="app">
+            <section id="main-weather" class="weather-section"></section>
 
-<main>
-<section id="location"></section>
+            <section class="search-section">
+                <div class="input-group">
+                    <input type="text" id="city-input" placeholder="Введите город для добавления..." autocomplete="off">
+                    <ul id="autocomplete-list" class="dropdown"></ul>
+                    <p id="error-msg" class="error-text"></p>
+                </div>
+            </section>
 
-
-<section id="weather"></section>
-
-
-<section id="add-city">
-<input type="text" id="cityInput" placeholder="Введите город" />
-<ul id="suggestions"></ul>
-<button id="addCityBtn">Добавить город</button>
-<p class="error" id="cityError"></p>
-</section>
-
-
-<section id="cities"></section>
-</main>
-
-
-<script src="app.js"></script>
+            <section id="extra-weather" class="weather-grid"></section>
+        </main>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
+
