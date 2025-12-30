@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="app-title"><i class="fas fa-cloud-sun"></i> Weather Forecast</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn refresh-btn">
+                    <i class="fas fa-sync-alt"></i> Обновить
+                </button>
+                <button id="addCityBtn" class="btn add-city-btn">
+                    <i class="fas fa-plus"></i> Добавить город
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="weather-cards" id="weatherCards"></div>
+        </div>
+
+        <!-- Модальное окно добавления города -->
+        <div id="cityModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Добавить город</h2>
+                    <button class="close-btn" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="cityInput">Название города:</label>
+                        <input type="text" id="cityInput" placeholder="Начните вводить название города...">
+                        <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                        <div class="error-message" id="cityError"></div>
+                    </div>
+                    <button id="confirmCityBtn" class="btn confirm-btn">Добавить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Оверлей загрузки -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner">
+                <i class="fas fa-cloud-sun fa-spin"></i>
+                <p>Загрузка данных о погоде...</p>
+            </div>
+        </div>
+
+        <!-- Оверлей ошибки -->
+        <div id="errorOverlay" class="error-overlay hidden">
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Ошибка загрузки данных</h3>
+                <p id="errorMessage">Не удалось загрузить данные о погоде</p>
+                <button id="retryBtn" class="btn retry-btn">Повторить попытку</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
