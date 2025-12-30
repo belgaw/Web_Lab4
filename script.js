@@ -130,6 +130,12 @@ async function getLocation() {
 
 // Загрузка погоды для всех городов
 async function loadWeatherForAllCities() {
+    if (!state.useGeolocation && state.cities.length === 0) {
+        elements.loadingOverlay.classList.add('hidden');
+        showWelcomeMessage();
+        return;
+    }
+
     elements.loadingOverlay.classList.remove('hidden');
     elements.errorOverlay.classList.add('hidden');
     
@@ -587,3 +593,4 @@ function showNotification(message) {
 // Запуск приложения при загрузке страницы
 
 document.addEventListener('DOMContentLoaded', init);
+
