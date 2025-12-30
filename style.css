@@ -1,91 +1,107 @@
-* {
-
-
-.card {
-background: rgba(255, 255, 255, 0.85);
-padding: 1rem;
-border-radius: 16px;
-text-align: center;
-box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-animation: fadeIn 0.4s ease-in-out;
+:root {
+    --primary: #3498db;
+    --dark: #2c3e50;
+    --light: #ecf0f1;
+    --error: #e74c3c;
+    --white: #ffffff;
 }
 
-
-.card strong {
-display: block;
-margin-bottom: 0.5rem;
-font-size: 1.1rem;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    color: var(--dark);
 }
 
-
-#add-city {
-background: rgba(255, 255, 255, 0.85);
-padding: 1rem;
-border-radius: 16px;
-box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-
-#add-city input {
-width: 100%;
-padding: 0.6rem;
-border-radius: 10px;
-border: 1px solid #ccc;
-margin-bottom: 0.5rem;
-}
-
-
-#add-city button {
-width: 100%;
-padding: 0.6rem;
-border: none;
-border-radius: 10px;
-background: #1976d2;
-color: #fff;
-font-weight: bold;
-cursor: pointer;
-}
-
-
-#suggestions {
-list-style: none;
-padding: 0;
-margin: 0 0 0.5rem 0;
-}
-
-
-#suggestions li {
-padding: 0.4rem;
-cursor: pointer;
-}
-
-
-#suggestions li:hover {
-background: #e3f2fd;
-}
-
-
-.error {
-color: #d32f2f;
-font-size: 0.9rem;
-}
-
-
-@keyframes fadeIn {
-from {
-opacity: 0;
-transform: translateY(10px);
-}
-to {
-opacity: 1;
-transform: translateY(0);
-}
-}
-
-
-@media (max-width: 600px) {
 header {
-flex-direction: column;
-gap: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
 }
+
+.btn-refresh {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-refresh:hover { background: #2980b9; }
+
+/* Поиск */
+.search-section { position: relative; margin: 20px 0; }
+input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.dropdown {
+    position: absolute;
+    width: 100%;
+    background: white;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ddd;
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.dropdown li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropdown li:hover { background: var(--light); }
+
+.error-text { color: var(--error); font-size: 0.9em; margin-top: 5px; display: none; }
+
+/* Карточки погоды */
+.weather-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.weather-header { border-bottom: 1px solid var(--light); padding-bottom: 10px; margin-bottom: 15px; }
+
+.forecast-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.day-item {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    background: var(--light);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.loading-spinner { text-align: center; padding: 20px; font-weight: bold; }
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    header { flex-direction: column; gap: 10px; }
+    .forecast-row { flex-direction: column; }
 }
